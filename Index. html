@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suraj AI Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+      padding: 20px;
+    }
+    .avatar {
+      height: 300px;
+      margin: 20px auto;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #1e90ff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3ca9ff;
+    }
+    #insta {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+    }
+    #settings {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    #language {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="settings">⚙️</div>
+  <select id="language" onchange="setLanguage(this.value)">
+    <option value="auto">🌐 Auto</option>
+    <option value="en-US">🇺🇸 English</option>
+    <option value="hi-IN">🇮🇳 हिंदी</option>
+    <option value="bn-IN">বাংলা</option>
+    <option value="gu-IN">ગુજરાતી</option>
+    <option value="mr-IN">मराठी</option>
+  </select>
+
+  <div class="container">
+    <h1>☀️ SUR🧠J</h1>
+    <img src="https://cdn.pixabay.com/photo/2016/11/29/10/08/avatar-1869057_1280.png" class="avatar" alt="3D Avatar">
+    <div class="buttons">
+      <button onclick="startListening()">🎤 Speak</button>
+      <button onclick="searchQuery()">🔍 Search</button>
+    </div>
+  </div>
+  <div id="insta">
+    <a href="https://instagram.com/mr_suraj_roy__" target="_blank" style="color:white; text-decoration:none;">@mr_suraj_roy__</a>
+  </div>
+
+  <script>
+    const synth = window.speechSynthesis;
+    let userLang = navigator.language || 'hi-IN';
+
+    function setLanguage(lang) {
+      if (lang === 'auto') {
+        userLang = navigator.language || 'hi-IN';
+      } else {
+        userLang = lang;
+      }
+      speak("भाषा बदल दी गई है। Language updated.");
+    }
+
+    function speak(text) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = userLang;
+      synth.speak(utter);
+    }
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = userLang;
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const result = event.results[0][0].transcript;
+        speak("आपने कहा: " + result);
+        callChatGPT(result);
+      };
+
+      recognition.onerror = function(event) {
+        speak("माफ कीजिए, मैं सुन नहीं पाया");
+      }
+    }
+
+    function callChatGPT(prompt) {
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer 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"
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const reply = data.choices[0].message.content;
+        speak(reply);
+      })
+      .catch(err => {
+        console.error(err);
+        speak("उत्तर प्राप्त करने में त्रुटि हुई।");
+      });
+    }
+
+    function searchQuery() {
+      const query = prompt("क्या सर्च करना है?");
+      if (query) {
+        window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
+      }
+    }
+  </script>
+</body>
+</html>
